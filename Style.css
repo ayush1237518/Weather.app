@@ -1,0 +1,226 @@
+/* ================= GLOBAL RESET ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* ================= BODY ================= */
+body {
+  height: 100vh;
+  background: linear-gradient(135deg, #000000, #0a0a0a, #121212);
+  color: #ffffff;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ================= MAIN CONTAINER ================= */
+.container {
+  width: 95%;
+  max-width: 950px;
+  padding: 30px;
+
+  border-radius: 20px;
+  text-align: center;
+
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 0 40px rgba(0, 0, 0, 0.9),
+    inset 0 0 20px rgba(255, 255, 255, 0.02);
+}
+
+/* ================= TITLE ================= */
+.title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+/* ================= SEARCH ================= */
+.search-box {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+/* INPUT */
+#search {
+  width: 100%;
+  padding: 14px;
+
+  border-radius: 12px;
+  border: 1px solid #333;
+
+  background: #0f0f0f;
+  color: #ffffff;
+
+  font-size: 16px;
+  outline: none;
+
+  transition: all 0.3s ease;
+}
+
+/* INPUT FOCUS */
+#search:focus {
+  border-color: #666;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+/* ================= SUGGESTIONS ================= */
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  width: 100%;
+  margin-top: 6px;
+
+  background: #0f0f0f;
+  border-radius: 10px;
+
+  border: 1px solid #333;
+
+  max-height: 220px;
+  overflow-y: auto;
+
+  display: none;
+  z-index: 1000;
+}
+
+/* SUGGESTION ITEM */
+.suggestions div {
+  padding: 10px 12px;
+  cursor: pointer;
+
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+/* HOVER EFFECT */
+.suggestions div:hover {
+  background: #1a1a1a;
+}
+
+/* CUSTOM SCROLLBAR */
+.suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.suggestions::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+/* ================= WEATHER CARD ================= */
+.weather-card {
+  margin-top: 20px;
+  padding: 25px;
+
+  border-radius: 15px;
+
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  animation: fadeIn 0.6s ease;
+}
+
+/* ================= CITY ================= */
+.city {
+  font-size: 1.6rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* ================= MAIN TEMP ================= */
+.main-temp {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* ================= GRID ================= */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+/* ================= ITEM CARD ================= */
+.item {
+  padding: 16px;
+
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  transition: all 0.3s ease;
+}
+
+/* HOVER EFFECT */
+.item:hover {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+
+/* ================= VALUE ================= */
+.value {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+/* ================= LABEL ================= */
+.label {
+  font-size: 0.85rem;
+  color: #aaaaaa;
+  letter-spacing: 0.5px;
+}
+
+/* ================= ANIMATION ================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+
+  .main-temp {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+}

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>WeatherX Pro</title>
+
+<style>
+
+/* ================= RESET ================= */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI',sans-serif;
+}
+
+/* ================= BODY ================= */
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#000,#0a0a0a,#121212);
+  color:#fff;
+}
+
+/* ================= CONTAINER ================= */
+.container{
+  width:95%;
+  max-width:950px;
+  padding:30px;
+  border-radius:20px;
+  text-align:center;
+
+  background:rgba(255,255,255,0.04);
+  backdrop-filter:blur(20px);
+
+  border:1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 0 40px rgba(0,0,0,0.9),
+    inset 0 0 20px rgba(255,255,255,0.02);
+}
+
+/* ================= TITLE ================= */
+.title{
+  font-size:2.6rem;
+  font-weight:700;
+  margin-bottom:20px;
+}
+
+/* ================= SEARCH ================= */
+.search-box{
+  position:relative;
+  margin-bottom:20px;
+}
+
+#search{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #333;
+  background:#0f0f0f;
+  color:#fff;
+  outline:none;
+  transition:.3s;
+}
+
+#search:focus{
+  border-color:#666;
+  box-shadow:0 0 10px rgba(255,255,255,0.1);
+}
+
+/* ================= SUGGESTIONS ================= */
+.suggestions{
+  position:absolute;
+  width:100%;
+  background:#0f0f0f;
+  border-radius:10px;
+  margin-top:5px;
+  border:1px solid #333;
+  max-height:200px;
+  overflow-y:auto;
+  display:none;
+  z-index:10;
+}
+
+.suggestions div{
+  padding:10px;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.suggestions div:hover{
+  background:#1a1a1a;
+}
+
+/* ================= WEATHER CARD ================= */
+.weather-card{
+  margin-top:20px;
+  padding:25px;
+  border-radius:15px;
+
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+
+  animation:fadeIn .6s ease;
+}
+
+/* ================= CITY ================= */
+.city{
+  font-size:1.5rem;
+  margin-bottom:10px;
+}
+
+/* ================= TEMP ================= */
+.main-temp{
+  font-size:3rem;
+  font-weight:bold;
+  margin-bottom:15px;
+}
+
+/* ================= GRID ================= */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+}
+
+/* ================= ITEM ================= */
+.item{
+  padding:15px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  transition:.3s;
+}
+
+.item:hover{
+  transform:translateY(-5px) scale(1.03);
+}
+
+/* ================= VALUE ================= */
+.value{
+  font-size:1.3rem;
+  font-weight:bold;
+}
+
+/* ================= LABEL ================= */
+.label{
+  font-size:.8rem;
+  color:#aaa;
+}
+
+/* ================= ANIMATION ================= */
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:700px){
+  .grid{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(max-width:500px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="title">🌌 WeatherX Pro</div>
+
+  <div class="search-box">
+    <input id="search" placeholder="Search city...">
+    <div id="suggestions" class="suggestions"></div>
+  </div>
+
+  <div id="weather" class="weather-card" style="display:none;">
+
+    <div id="city" class="city"></div>
+    <div id="temp" class="main-temp"></div>
+
+    <div class="grid">
+
+      <div class="item">
+        <div id="humidity" class="value"></div>
+        <div class="label">Humidity</div>
+      </div>
+
+      <div class="item">
+        <div id="wind" class="value"></div>
+        <div class="label">Wind Speed</div>
+      </div>
+
+      <div class="item">
+        <div id="uv" class="value"></div>
+        <div class="label">UV Index</div>
+      </div>
+
+      <div class="item">
+        <div id="rain" class="value"></div>
+        <div class="label">Rain</div>
+      </div>
+
+      <div class="item">
+        <div id="visibility" class="value"></div>
+        <div class="label">Visibility</div>
+      </div>
+
+      <div class="item">
+        <div id="pressure" class="value"></div>
+        <div class="label">Pressure</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+/* ================= SEARCH ================= */
+const search=document.getElementById("search");
+const suggestions=document.getElementById("suggestions");
+
+search.addEventListener("input",async()=>{
+  const query=search.value;
+
+  if(query.length<2){
+    suggestions.style.display="none";
+    return;
+  }
+
+  const res=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}`);
+  const data=await res.json();
+
+  suggestions.innerHTML="";
+  suggestions.style.display="block";
+
+  data.results?.slice(0,5).forEach(city=>{
+    const div=document.createElement("div");
+    div.textContent=`${city.name}, ${city.country}`;
+
+    div.onclick=()=>{
+      search.value=city.name;
+      suggestions.style.display="none";
+      getWeather(city.latitude,city.longitude,city.name);
+    };
+
+    suggestions.appendChild(div);
+  });
+});
+
+/* ================= WEATHER ================= */
+async function getWeather(lat,lon,name){
+
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,uv_index,visibility,rain,surface_pressure&timezone=auto`;
+
+  const res=await fetch(url);
+  const data=await res.json();
+
+  /* get current hour index */
+  const now=new Date();
+  const hour=now.getHours();
+
+  document.getElementById("weather").style.display="block";
+  document.getElementById("city").textContent=name;
+
+  document.getElementById("temp").textContent=
+    data.current_weather.temperature+" °C";
+
+  document.getElementById("wind").textContent=
+    data.current_weather.windspeed+" km/h";
+
+  document.getElementById("humidity").textContent=
+    data.hourly.relative_humidity_2m[hour]+" %";
+
+  document.getElementById("uv").textContent=
+    data.hourly.uv_index[hour];
+
+  document.getElementById("rain").textContent=
+    data.hourly.rain[hour]+" mm";
+
+  document.getElementById("visibility").textContent=
+    data.hourly.visibility[hour]+" m";
+
+  document.getElementById("pressure").textContent=
+    data.hourly.surface_pressure[hour]+" hPa";
+}
+
+</script>
+
+</body>
+</html>
