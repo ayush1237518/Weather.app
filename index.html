@@ -69,6 +69,37 @@ body.night{
   margin-bottom:10px;
 }
 
+.condition{
+  font-size:1.1rem;
+  font-weight:600;
+  margin-bottom:8px;
+  color:#e0e0e0;
+}
+
+.updated{
+  font-size:0.75rem;
+  color:#888;
+  margin-bottom:12px;
+}
+
+.loading,.error{
+  margin-top:20px;
+  padding:16px;
+  border-radius:12px;
+  font-size:0.95rem;
+}
+
+.loading{
+  background:rgba(255,255,255,0.05);
+  color:#aaa;
+}
+
+.error{
+  background:rgba(255,80,80,0.12);
+  border:1px solid rgba(255,80,80,0.3);
+  color:#ff9999;
+}
+
 /* ================= SEARCH ================= */
 .search-box{
   position:relative;
@@ -218,11 +249,16 @@ body.night{
     <div id="suggestions" class="suggestions"></div>
   </div>
 
+  <div id="loading" class="loading" style="display:none;">Loading live weather…</div>
+  <div id="error" class="error" style="display:none;"></div>
+
   <div id="weather" class="weather-card" style="display:none;">
 
     <div id="city" class="city"></div>
     <div id="status" class="status"></div>
+    <div id="condition" class="condition"></div>
     <div id="temp" class="main-temp"></div>
+    <div id="updated" class="updated"></div>
 
     <div class="grid">
 
@@ -263,89 +299,168 @@ body.night{
 
 <script>
 
-/* ================= SEARCH ================= */
 const search=document.getElementById("search");
 const suggestions=document.getElementById("suggestions");
+const weatherCard=document.getElementById("weather");
+const loadingEl=document.getElementById("loading");
+const errorEl=document.getElementById("error");
 
-search.addEventListener("input",async()=>{
-  const query=search.value;
+let activeCity=null;
+let refreshTimer=null;
+let searchTimer=null;
+let searchAbort=null;
 
-  if(query.length<2){
-    suggestions.style.display="none";
-    return;
-  }
+const WEATHER_CODES={
+  0:"Clear sky",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",
+  45:"Foggy",48:"Depositing rime fog",
+  51:"Light drizzle",53:"Moderate drizzle",55:"Dense drizzle",
+  61:"Slight rain",63:"Moderate rain",65:"Heavy rain",
+  71:"Slight snow",73:"Moderate snow",75:"Heavy snow",
+  80:"Rain showers",81:"Moderate rain showers",82:"Violent rain showers",
+  95:"Thunderstorm",96:"Thunderstorm with hail",99:"Thunderstorm with heavy hail"
+};
 
-  const res=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}`);
-  const data=await res.json();
+function weatherLabel(code){
+  return WEATHER_CODES[code]||"Unknown";
+}
 
-  suggestions.innerHTML="";
-  suggestions.style.display="block";
+function formatValue(value,unit,fallback="—"){
+  return value!=null&&!Number.isNaN(value)?`${value}${unit}`:fallback;
+}
 
-  data.results?.slice(0,5).forEach(city=>{
-    const div=document.createElement("div");
-    div.textContent=`${city.name}, ${city.country}`;
+function formatLocalTime(isoString,timezone){
+  if(!isoString)return"";
+  return new Intl.DateTimeFormat(undefined,{
+    dateStyle:"medium",timeStyle:"short",timeZone:timezone
+  }).format(new Date(isoString));
+}
 
-    div.onclick=()=>{
-      search.value=city.name;
+function showLoading(){
+  loadingEl.style.display="block";
+  errorEl.style.display="none";
+}
+
+function showError(msg){
+  loadingEl.style.display="none";
+  errorEl.style.display="block";
+  errorEl.textContent=msg;
+}
+
+function hideMessages(){
+  loadingEl.style.display="none";
+  errorEl.style.display="none";
+}
+
+search.addEventListener("input",()=>{
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(async()=>{
+    const query=search.value.trim();
+
+    if(query.length<2){
       suggestions.style.display="none";
-      getWeather(city.latitude,city.longitude,city.name);
-    };
+      return;
+    }
 
-    suggestions.appendChild(div);
-  });
+    if(searchAbort)searchAbort.abort();
+    searchAbort=new AbortController();
+
+    try{
+      const res=await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5`,
+        {signal:searchAbort.signal}
+      );
+      const data=await res.json();
+
+      suggestions.innerHTML="";
+
+      if(!data.results?.length){
+        suggestions.style.display="none";
+        return;
+      }
+
+      suggestions.style.display="block";
+
+      data.results.forEach(city=>{
+        const div=document.createElement("div");
+        const label=[city.name,city.admin1,city.country].filter(Boolean).join(", ");
+        div.textContent=label;
+
+        div.onclick=()=>{
+          search.value=city.name;
+          suggestions.style.display="none";
+          selectCity(city.latitude,city.longitude,label);
+        };
+
+        suggestions.appendChild(div);
+      });
+    }catch(err){
+      if(err.name!=="AbortError")console.error(err);
+    }
+  },300);
 });
 
-/* ================= WEATHER ================= */
-async function getWeather(lat,lon,name){
+function selectCity(lat,lon,name){
+  activeCity={lat,lon,name};
+  getWeather();
+  clearInterval(refreshTimer);
+  refreshTimer=setInterval(getWeather,10*60*1000);
+}
 
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,uv_index,visibility,rain,surface_pressure&timezone=auto`;
+async function getWeather(){
+  if(!activeCity)return;
 
-  const res=await fetch(url);
-  const data=await res.json();
+  const {lat,lon,name}=activeCity;
+  showLoading();
 
-  const now=new Date();
-  const hour=now.getHours();
+  const params=new URLSearchParams({
+    latitude:lat,
+    longitude:lon,
+    timezone:"auto",
+    current:"temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,visibility,rain,surface_pressure,is_day"
+  });
 
-  const isDay=data.current_weather.is_day;
+  try{
+    const res=await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+    if(!res.ok)throw new Error("Could not fetch weather data.");
 
-  document.getElementById("weather").style.display="block";
-  document.getElementById("city").textContent=name;
+    const data=await res.json();
+    const current=data.current;
 
-  /* 🌞 DAY / 🌙 NIGHT LOGIC */
-  const body=document.body;
-  const status=document.getElementById("status");
+    if(!current){
+      throw new Error("Weather data is unavailable for this location.");
+    }
 
-  if(isDay===1){
-    body.classList.remove("night");
-    body.classList.add("day");
-    status.textContent="🌞 Day Time";
-  }else{
-    body.classList.remove("day");
-    body.classList.add("night");
-    status.textContent="🌙 Night Time";
+    hideMessages();
+    weatherCard.style.display="block";
+
+    const isDay=current.is_day===1;
+    const body=document.body;
+    const status=document.getElementById("status");
+
+    if(isDay){
+      body.classList.remove("night");
+      body.classList.add("day");
+      status.textContent="🌞 Day Time";
+    }else{
+      body.classList.remove("day");
+      body.classList.add("night");
+      status.textContent="🌙 Night Time";
+    }
+
+    document.getElementById("city").textContent=name;
+    document.getElementById("condition").textContent=weatherLabel(current.weather_code);
+    document.getElementById("temp").textContent=formatValue(Math.round(current.temperature_2m)," °C");
+    document.getElementById("wind").textContent=formatValue(Math.round(current.wind_speed_10m)," km/h");
+    document.getElementById("humidity").textContent=formatValue(Math.round(current.relative_humidity_2m)," %");
+    document.getElementById("uv").textContent=formatValue(current.uv_index?.toFixed(1),"");
+    document.getElementById("rain").textContent=formatValue(current.rain?.toFixed(1)," mm");
+    document.getElementById("visibility").textContent=formatValue(Math.round(current.visibility)," m");
+    document.getElementById("pressure").textContent=formatValue(Math.round(current.surface_pressure)," hPa");
+    document.getElementById("updated").textContent=
+      `Updated: ${formatLocalTime(current.time,data.timezone)} (${data.timezone})`;
+  }catch(err){
+    showError(err.message||"Something went wrong. Please try again.");
   }
-
-  /* DATA */
-  document.getElementById("temp").textContent=
-    data.current_weather.temperature+" °C";
-
-  document.getElementById("wind").textContent=
-    data.current_weather.windspeed+" km/h";
-
-  document.getElementById("humidity").textContent=
-    data.hourly.relative_humidity_2m[hour]+" %";
-
-  document.getElementById("uv").textContent=
-    data.hourly.uv_index[hour];
-
-  document.getElementById("rain").textContent=
-    data.hourly.rain[hour]+" mm";
-
-  document.getElementById("visibility").textContent=
-    data.hourly.visibility[hour]+" m";
-
-  document.getElementById("pressure").textContent=
-    data.hourly.surface_pressure[hour]+" hPa";
 }
 
 </script>
