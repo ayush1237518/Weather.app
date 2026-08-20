@@ -1,28 +1,49 @@
-🌦️ Weather App
+# 🌦️ Weather.app
+
+A modern and responsive weather application built using **HTML, CSS, and JavaScript**. It provides real-time weather information for any city using a weather API and displays essential weather details in a clean and user-friendly interface.
 
 
-A simple and responsive Weather Application that provides real-time weather updates for any city around the world. This app fetches live data from a weather API and displays key weather details in a clean UI.
-
----
-
-🚀 Features :
-
-🌍 Search weather by city name
-
-🌡️ Real-time temperature updates
-
-💨 Wind speed and humidity details
-
-🌤️ Weather conditions (Cloudy, Rainy, Sunny, etc.)
-
-📱 Fully responsive design (mobile + desktop)
-
-⚡ Fast and lightweight
 
 ---
 
-🛠️ Tech Stack :
+## ✨ Features
 
-Frontend: HTML, CSS, JavaScript
+- 🌍 Search weather by city name
+- 🌡️ Real-time temperature display
+- 💧 Humidity information
+- 💨 Wind speed details
+- ☁️ Weather condition with icons
+- 📱 Fully responsive design
+- ⚡ Fast and lightweight interface
 
-API: OpenWeatherMap API
+---
+
+## 🛠️ Tech Stack
+
+- **HTML5**
+- **CSS3**
+- **JavaScript (ES6)**
+- **Weather API** for live weather data
+
+---
+
+## 📂 Project Structure
+
+```text
+Weather.app/
+│── index.html
+│── style.css
+│── script.js
+└── README.md
+```
+
+
+## 📖 How to Use
+
+1. Open the application.
+2. Enter the name of any city.
+3. Click the search button.
+4. View the live weather details instantly.
+
+
+---
