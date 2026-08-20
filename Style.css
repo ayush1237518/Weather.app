@@ -216,6 +216,22 @@ body { color: #fff; overflow-x: hidden; position: relative; min-height: 100vh; }
 }
 .sug-item:hover { background: rgba(255, 255, 255, .08); }
 
+/* ── USE CURRENT LOCATION BUTTON ── */
+.loc-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; max-width: 640px;
+  padding: 13px 18px; margin-top: -4px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  background: rgba(255, 255, 255, .07);
+  backdrop-filter: blur(20px);
+  color: #fff; font-size: .88rem; font-family: inherit; cursor: pointer;
+  transition: background .2s, border-color .2s, transform .15s;
+}
+.loc-btn:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .25); }
+.loc-btn:active { transform: scale(.98); }
+.loc-btn:disabled { opacity: .5; cursor: not-allowed; }
+
 /* ── STATUS ── */
 .status-bar {
   width: 100%; max-width: 640px;

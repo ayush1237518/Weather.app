@@ -293,6 +293,58 @@ function selectCity(lat, lon, name) {
   refTimer = setInterval(getWeather, 10 * 60 * 1000);
 }
 
+/* ── USE CURRENT LOCATION (Geolocation) ── */
+function useCurrentLocation() {
+  const locBtn = document.getElementById('loc-btn');
+
+  // Step 1: Check the browser actually supports the Geolocation API.
+  if (!('geolocation' in navigator)) {
+    showStatus('Your browser does not support location services.', 'error');
+    return;
+  }
+
+  // Step 2: Show a loading state and disable the button while we work.
+  if (locBtn) locBtn.disabled = true;
+  showStatus('Detecting your location…', 'loading');
+
+  // Step 3: Ask the browser for permission + the user's coordinates.
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      // Permission granted — we now have latitude/longitude.
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      // Step 4: Turn the coordinates into a readable place name.
+      // Free reverse-geocoding lookup — if it fails, we still show the
+      // weather, just with a generic "Current Location" label instead.
+      let placeName = 'Current Location';
+      try {
+        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+        const data = await res.json();
+        placeName = data.city || data.locality || data.principalSubdivision || placeName;
+      } catch (e) {
+        console.error('Reverse geocoding failed:', e); // non-fatal, keep going
+      }
+
+      // Step 5: Reuse the existing "select a city" flow.
+      srchEl.value = placeName;
+      sugEl.style.display = 'none';
+      selectCity(lat, lon, placeName);
+      if (locBtn) locBtn.disabled = false;
+    },
+    (error) => {
+      // Step 6: Handle the different ways geolocation can fail.
+      if (locBtn) locBtn.disabled = false;
+      if (error.code === error.PERMISSION_DENIED) {
+        showStatus('Location permission denied.', 'error');
+      } else {
+        showStatus('Could not determine your location. Please try again.', 'error');
+      }
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // geolocation options
+  );
+}
+
 /* ── WEATHER FETCH ── */
 async function getWeather() {
   if (!activeCity) return;
