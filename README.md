@@ -8,13 +8,14 @@ A modern and responsive weather application built using **HTML, CSS, and JavaScr
 
 ## ✨ Features
 
-- 🌍 Search weather by city name
-- 🌡️ Real-time temperature display
-- 💧 Humidity information
-- 💨 Wind speed details
-- ☁️ Weather condition with icons
-- 📱 Fully responsive design
-- ⚡ Fast and lightweight interface
+-  Search weather by city name
+-  Real-time temperature display
+-  Humidity information
+-  Wind speed details
+-  Weather condition with icons
+-  Fully responsive design
+-  Fast and lightweight interface
+-  Detect your current locations
 
 ---
 
